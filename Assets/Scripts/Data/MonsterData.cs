@@ -5,6 +5,8 @@ public class MonsterData : ScriptableObject
     public string monsterName;
     // public MonsterType type;
 
+    public Sprite sprite;
+
     public int level;
     public int energyCost;
 
