@@ -19,10 +19,10 @@ public class MonsterSpawner : MonoBehaviour
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         worldPos.z = 0;
 
-        // 🔑 Convert world → cell
+        // Convert world → cell
         Vector3Int cellPos = tilemap.WorldToCell(worldPos);
 
-        // ❌ Không có tile thì không spawn
+        // Không có tile thì không spawn
         if (!tilemap.HasTile(cellPos))
         {
             Debug.Log("No tile at this position. Cannot spawn enemy.");
