@@ -1,32 +1,39 @@
 using UnityEngine;
+
+public enum MonsterState {Idle, Move, Attack, Die}
 public class Monster : BaseUnit
 {
     public MonsterData data;
-    public SpriteRenderer rendRootModel;
-    // public Lane currentLane;
 
-    public Rigidbody2D rb;
-    private float attackTimer;
+    public float moveSpeed;
 
     // Like (9, 5) mean object ca ben go max (9, 5) and min (-9, -5)
     public Vector2 rangeAreMove;
 
-    public GameObject rootItem;
-    public float rotateSpeed = 30f; // Điều chỉnh tốc độ
+    public MonsterState state;
+
+    private GameObject target;
+    private BaseUnit targetAsUnit;
+
     protected override void Start()
     {
-        base.Start();
-
         Setup();
+        base.Start();
     }
 
     void FixedUpdate()
     {
         // Cập nhật vận tốc trong FixedUpdate để đồng bộ với hệ thống vật lý
-        Move();
-        ActivityItem();
+        if (state == MonsterState.Move)
+        {
+            Move();
+        }
+        if (state == MonsterState.Attack && target != null && targetAsUnit is Defender)
+        {
+            Attack(targetAsUnit);
+        }
 
-        // Kiểm tra giới hạn cũng nên ở đây nếu bạn muốn nó gắn liền với logic vật lý
+        // Kiểm tra giới hạn
         CheckBounds();
     }
 
@@ -44,28 +51,55 @@ public class Monster : BaseUnit
 
     void Move()
     {
-        rb.velocity = Vector3.right * data.moveSpeed;
+        rb.velocity = Vector3.right * moveSpeed;
     }
 
     public void Attack(BaseUnit target)
     {
         attackTimer += Time.deltaTime;
-        if (attackTimer >= 1f / data.attackSpeed)
+        if (attackTimer >= 1f / attackSpeed)
         {
-            target.TakeDamage(data.attack);
+            target.TakeDamage(attack);
             attackTimer = 0;
         }
-    }
-
-    // Đặt trong Update()
-    void ActivityItem()
-    {
-        // Xoay quanh trục Z 30 độ mỗi giây
-        rootItem.transform.Rotate(0f, 0f, rotateSpeed * Time.deltaTime);
     }
 
     void Setup()
     {
         rendRootModel.sprite = data.sprite;
+
+        maxHP = data.maxHP;
+        attack = data.attack;
+        attackSpeed = data.attackSpeed;
+        shield = data.shield;
+        moveSpeed = data.moveSpeed;
+        
+        state = MonsterState.Move;
+    }
+
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        Debug.Log(collision.name);
+
+        if (collision.gameObject.CompareTag(TagConfigs.DefenderTag))
+        {
+            state = MonsterState.Attack;
+
+            rb.velocity = Vector3.zero;
+
+            target = collision.gameObject;
+            targetAsUnit = target.GetComponent<Defender>();
+        }
+    }
+
+    void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag(TagConfigs.DefenderTag))
+        {
+            state = MonsterState.Move;
+
+            target = null;
+            targetAsUnit = null;
+        }
     }
 }

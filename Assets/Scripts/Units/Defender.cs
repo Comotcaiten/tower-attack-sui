@@ -1,10 +1,13 @@
 using UnityEngine;
 public class Defender : BaseUnit
 {
-    public float attack;
-    public float attackSpeed;
+    public DefenderData data;
 
-    private float attackTimer;
+    protected override void Start()
+    {
+        Setup();
+        base.Start();
+    }
 
     void Update()
     {
@@ -18,5 +21,15 @@ public class Defender : BaseUnit
             monster.TakeDamage(attack);
             attackTimer = 0;
         }
+    }
+
+    void Setup()
+    {
+        rendRootModel.sprite = data.sprite;
+
+        maxHP = data.maxHP;
+        attack = data.attack;
+        attackSpeed = data.attackSpeed;
+        shield = data.shield;
     }
 }

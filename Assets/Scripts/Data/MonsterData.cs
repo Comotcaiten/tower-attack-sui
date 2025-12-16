@@ -12,6 +12,7 @@ public class MonsterData : ScriptableObject
 
     public float maxHP;
     public float attack;
+    public float shield;
     public float attackSpeed;
     public float moveSpeed;
 
