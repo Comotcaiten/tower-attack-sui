@@ -51,17 +51,6 @@ public abstract class BaseUnit : MonoBehaviour
         }
     }
 
-    protected virtual void SetHp(float newHp)
-    {
-        if (newHp < 0)
-        {
-            return;
-        }
-        currentHP = newHp;
-        if (currentHP <= 0)
-            Die();
-    }
-
     protected virtual void Die()
     {
         Destroy(gameObject);

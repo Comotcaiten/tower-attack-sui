@@ -1,0 +1,26 @@
+using UnityEngine;
+public class SpawnManager : MonoBehaviour
+{
+    public Transform spawnPoint;
+    public EnergyManager energyManager;
+
+    public GameObject prefab;
+
+    public void SpawnMonster(MonsterData data) //Lane lane)
+    {
+        if (!energyManager.CanSpend(data.energyCost))
+        {
+            Debug.Log("Can be spawn monster because this monster need more energy than storage energy");
+            return;
+        }
+
+        energyManager.Spend(data.energyCost);
+
+        GameObject go = Instantiate(prefab, spawnPoint.position, Quaternion.identity);
+        Monster monster = go.GetComponent<Monster>();
+        monster.data = data;
+        
+        // monster.currentLane = lane;
+        // lane.monstersInLane.Add(monster);
+    }
+}

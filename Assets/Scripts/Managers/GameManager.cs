@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 public enum GameState
 {
@@ -13,10 +14,28 @@ public class GameManager : MonoBehaviour
 
     public GameState State { get; private set; }
 
+    public SpawnManager spawnManager;
+
+    public List<MonsterData> datas;
+
     void Awake()
     {
         Instance = this;
         State = GameState.Preparing;
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            if (datas.Count <= 0)
+            {
+                Debug.Log("GameManager > Datas > [Null-0x00000000]: Dont have any data to spawn");
+                return;
+            }
+            Debug.Log("Spawn Monster:" + datas[0]);
+            spawnManager.SpawnMonster(datas[0]);
+        }
     }
 
     public void StartGame()
