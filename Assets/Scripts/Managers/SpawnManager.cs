@@ -6,7 +6,7 @@ public class SpawnManager : MonoBehaviour
 
     public GameObject prefab;
 
-    public void SpawnMonster(MonsterData data) //Lane lane)
+    public void SpawnMonster(MonsterData data, Vector3 spawnPoints) //Lane lane)
     {
         if (!energyManager.CanSpend(data.energyCost))
         {
@@ -16,10 +16,11 @@ public class SpawnManager : MonoBehaviour
 
         energyManager.Spend(data.energyCost);
 
-        GameObject go = Instantiate(prefab, spawnPoint.position, Quaternion.identity);
+        // GameObject go = Instantiate(prefab, spawnPoint.position, Quaternion.identity);
+        GameObject go = Instantiate(prefab, spawnPoints, Quaternion.identity);
         Monster monster = go.GetComponent<Monster>();
         monster.data = data;
-        
+
         // monster.currentLane = lane;
         // lane.monstersInLane.Add(monster);
     }

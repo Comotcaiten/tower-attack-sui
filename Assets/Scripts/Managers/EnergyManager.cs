@@ -26,5 +26,6 @@ public class EnergyManager : MonoBehaviour
     public void Spend(int cost)
     {
         CurrentEnergy -= cost;
+        CurrentEnergy = Mathf.Min(0, CurrentEnergy);
     }
 }
