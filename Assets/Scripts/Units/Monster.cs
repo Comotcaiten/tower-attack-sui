@@ -21,13 +21,22 @@ public class Monster : BaseUnit
         base.Start();
     }
 
+    void Update()
+    {
+        if (state == MonsterState.Attack && target != null && targetAsUnit is Defender)
+        {
+            Attack(targetAsUnit);
+        }
+    }
+
     void FixedUpdate()
     {
         // Cập nhật vận tốc trong FixedUpdate để đồng bộ với hệ thống vật lý
         if (state == MonsterState.Move)
         {
             Move();
-        }
+        }        
+        
         if (state == MonsterState.Attack && target != null && targetAsUnit is Defender)
         {
             Attack(targetAsUnit);
