@@ -25,20 +25,14 @@ public class GameManager : MonoBehaviour
     }
 
     void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.A))
+    {    
+        if (Input.GetMouseButtonDown(0))
         {
             if (datas.Count <= 0)
             {
                 Debug.Log("GameManager > Datas > [Null-0x00000000]: Dont have any data to spawn");
                 return;
             }
-            Debug.Log("Spawn Monster:" + datas[0]);
-            // spawnManager.SpawnMonster(datas[0]);
-        }
-    
-        if (Input.GetMouseButtonDown(0))
-        {
             Debug.Log("Mouse Button Down");
             HandleClick();
         }
