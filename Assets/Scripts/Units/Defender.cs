@@ -33,8 +33,7 @@ public class Defender : BaseUnit
             GameObject go = Instantiate(bulletPrefab, this.transform.position, Quaternion.identity);
             var bullets = go.GetComponent<Bullets>() as Bullets;
             bullets.ower = this;
-
-            bullets.rb.velocity = Vector3.left * 5f;
+            // bullets.rb.velocity = Vector3.left * 5f;
 
             attackTimer = 0;
         }

@@ -8,7 +8,7 @@ public class Monster : BaseUnit
     public float moveSpeed;
 
     // Like (9, 5) mean object ca ben go max (9, 5) and min (-9, -5)
-    public Vector2 rangeAreMove;
+    public Vector2 rangeAreMove = new Vector2(9, 5);
 
     public MonsterState state;
 
@@ -27,21 +27,23 @@ public class Monster : BaseUnit
     {
         sensor.Cast();
 
-        if (state != MonsterState.Attack && 
-            sensor.HasDetectedHit() && 
-            sensor.GetComponent<Defender>() != null && 
+        if (state != MonsterState.Attack &&
+            sensor.HasDetectedHit() &&
+            sensor.GetComponent<Defender>() != null &&
             sensor.GetComponent<Defender>() is Defender
         )
         {
             state = MonsterState.Attack;
             target = sensor.GetHitObject();
             targetAsUnit = sensor.GetComponent<Defender>();
+            FreezeMove();
         }
         else if (state != MonsterState.Move && !sensor.HasDetectedHit())
         {
             state = MonsterState.Move;
             target = null;
             targetAsUnit = null;
+            UnFreeze();
         }
     }
 
@@ -56,6 +58,7 @@ public class Monster : BaseUnit
         if (state == MonsterState.Attack && target != null && targetAsUnit is Defender)
         {
             rb.velocity = Vector3.zero;
+
             Attack(targetAsUnit);
         }
 
@@ -103,5 +106,17 @@ public class Monster : BaseUnit
         state = MonsterState.Move;
 
         sensor = new SensorRayMonster(this.transform);
+    }
+
+    void FreezeMove()
+    {
+        rb.constraints = RigidbodyConstraints2D.FreezeAll;
+        rb.velocity = Vector3.zero;
+    }
+
+    void UnFreeze()
+    {
+        rb.constraints = RigidbodyConstraints2D.FreezePositionY;
+        rb.freezeRotation = true;
     }
 }
