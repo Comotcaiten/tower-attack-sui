@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum MonsterState {Idle, Move, Attack, Die}
+public enum MonsterState { Idle, Move, Attack, Die }
 public class Monster : BaseUnit
 {
     public MonsterData data;
@@ -15,6 +15,8 @@ public class Monster : BaseUnit
     private GameObject target;
     private BaseUnit targetAsUnit;
 
+    private SensorRayMonster sensor;
+
     protected override void Start()
     {
         Setup();
@@ -23,9 +25,23 @@ public class Monster : BaseUnit
 
     void Update()
     {
-        if (state == MonsterState.Attack && target != null && targetAsUnit is Defender)
+        sensor.Cast();
+
+        if (state != MonsterState.Attack && 
+            sensor.HasDetectedHit() && 
+            sensor.GetComponent<Defender>() != null && 
+            sensor.GetComponent<Defender>() is Defender
+        )
         {
-            Attack(targetAsUnit);
+            state = MonsterState.Attack;
+            target = sensor.GetHitObject();
+            targetAsUnit = sensor.GetComponent<Defender>();
+        }
+        else if (state != MonsterState.Move && !sensor.HasDetectedHit())
+        {
+            state = MonsterState.Move;
+            target = null;
+            targetAsUnit = null;
         }
     }
 
@@ -35,10 +51,11 @@ public class Monster : BaseUnit
         if (state == MonsterState.Move)
         {
             Move();
-        }        
-        
+        }
+
         if (state == MonsterState.Attack && target != null && targetAsUnit is Defender)
         {
+            rb.velocity = Vector3.zero;
             Attack(targetAsUnit);
         }
 
@@ -82,33 +99,9 @@ public class Monster : BaseUnit
         attackSpeed = data.attackSpeed;
         shield = data.shield;
         moveSpeed = data.moveSpeed;
-        
+
         state = MonsterState.Move;
-    }
 
-    void OnTriggerEnter2D(Collider2D collision)
-    {
-        Debug.Log(collision.name);
-
-        if (collision.gameObject.CompareTag(TagConfigs.DefenderTag))
-        {
-            state = MonsterState.Attack;
-
-            rb.velocity = Vector3.zero;
-
-            target = collision.gameObject;
-            targetAsUnit = target.GetComponent<Defender>();
-        }
-    }
-
-    void OnTriggerExit2D(Collider2D collision)
-    {
-        if (collision.gameObject.CompareTag(TagConfigs.DefenderTag))
-        {
-            state = MonsterState.Move;
-
-            target = null;
-            targetAsUnit = null;
-        }
+        sensor = new SensorRayMonster(this.transform);
     }
 }

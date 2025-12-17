@@ -2,7 +2,7 @@ using UnityEngine;
 public class Defender : BaseUnit
 {
     public DefenderData data;
-    public Sensor sensor;
+    public SensorRay sensor;
     public GameObject bulletPrefab;
 
     protected override void Start()
@@ -13,20 +13,16 @@ public class Defender : BaseUnit
 
     void Update()
     {
-        if (sensor!.IsDetect)
+        sensor.Cast();
+        if (sensor.HasDetectedHit())
         {
             attackTimer += Time.deltaTime;
-            Attack(sensor!.MonsterUnit);
+            Attack(sensor!.GetComponent<Monster>());
         }
     }
 
     public void Attack(Monster monster)
     {
-        // if (attackTimer >= 1f / attackSpeed)
-        // {
-        //     monster.TakeDamage(attack);
-        //     attackTimer = 0;
-        // }
 
         if (monster == null)
         {
@@ -39,8 +35,6 @@ public class Defender : BaseUnit
             bullets.ower = this;
 
             bullets.rb.velocity = Vector3.left * 5f;
-
-            // Physics2D.IgnoreCollision()
 
             attackTimer = 0;
         }
@@ -55,5 +49,7 @@ public class Defender : BaseUnit
         attack = data.attack;
         attackSpeed = data.attackSpeed;
         shield = data.shield;
+
+        sensor = new SensorRay(this.transform);
     }
 }

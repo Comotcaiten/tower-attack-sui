@@ -5,3 +5,8 @@ public class TagConfigs
     public const string DefenderTag = "Defender";
     public const string PointerTag = "Pointer";
 }
+
+public class LayerConfigs
+{
+    public const string DefenderLayer = "Defender";
+}
