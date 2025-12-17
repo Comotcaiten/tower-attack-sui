@@ -8,7 +8,6 @@ public class Defender : BaseUnit
     protected override void Start()
     {
         Setup();
-        base.Start();
     }
 
     void Update()
@@ -40,11 +39,17 @@ public class Defender : BaseUnit
         
     }
 
-    void Setup()
+    protected override void Die()
+    {
+        
+    }
+
+    public void Setup()
     {
         rendRootModel.sprite = data.sprite;
 
         maxHP = data.maxHP;
+        currentHP = maxHP;
         attack = data.attack;
         attackSpeed = data.attackSpeed;
         shield = data.shield;

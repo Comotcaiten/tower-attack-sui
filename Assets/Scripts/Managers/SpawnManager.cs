@@ -17,6 +17,6 @@ public class SpawnManager : MonoBehaviour
         energyManager.Spend(data.energyCost);
         GameObject go = Instantiate(prefab, spawnPoints, Quaternion.identity);
         Monster monster = go.GetComponent<Monster>();
-        monster.data = data;;
+        monster.data = data;
     }
 }
