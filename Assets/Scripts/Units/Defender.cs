@@ -1,22 +1,54 @@
 using UnityEngine;
 public class Defender : BaseUnit
 {
-    public float attack;
-    public float attackSpeed;
+    public DefenderData data;
+    public SensorRay sensor;
+    public GameObject bulletPrefab;
 
-    private float attackTimer;
+    protected override void Start()
+    {
+        Setup();
+        base.Start();
+    }
 
     void Update()
     {
-        attackTimer += Time.deltaTime;
+        sensor.Cast();
+        if (sensor.HasDetectedHit())
+        {
+            attackTimer += Time.deltaTime;
+            Attack(sensor!.GetComponent<Monster>());
+        }
     }
 
     public void Attack(Monster monster)
     {
-        if (attackTimer >= 1f / attackSpeed)
+
+        if (monster == null)
         {
-            monster.TakeDamage(attack);
+            return;
+        }
+        if (attackTimer >= attackSpeed)
+        {
+            GameObject go = Instantiate(bulletPrefab, this.transform.position, Quaternion.identity);
+            var bullets = go.GetComponent<Bullets>() as Bullets;
+            bullets.ower = this;
+            // bullets.rb.velocity = Vector3.left * 5f;
+
             attackTimer = 0;
         }
+        
+    }
+
+    void Setup()
+    {
+        rendRootModel.sprite = data.sprite;
+
+        maxHP = data.maxHP;
+        attack = data.attack;
+        attackSpeed = data.attackSpeed;
+        shield = data.shield;
+
+        sensor = new SensorRay(this.transform);
     }
 }
