@@ -47,7 +47,7 @@ module sui_interact::game {
         id: object::UID,
         name: String,
         attack_bonus: u64,
-        rarity: u8, // 1: Common, 2: Rare, 3: Epic, 4: Legendary
+        rarity: u8, 
         owner: address,
     }
 
@@ -56,7 +56,7 @@ module sui_interact::game {
         id: object::UID,
         name: String,
         defense_bonus: u64,
-        rarity: u8, // 1: Common, 2: Rare, 3: Epic, 4: Legendary
+        rarity: u8,
         owner: address,
     }
 
@@ -67,7 +67,7 @@ module sui_interact::game {
         hp: u64,
         defender_base_power: u64,
         defender_current_power: u64,
-        last_power_increase: u64, // timestamp
+        last_power_increase: u64,
         is_destroyed: bool,
         game_id: object::ID,
     }
@@ -104,7 +104,7 @@ module sui_interact::game {
 
     public struct ItemDropped has copy, drop {
         item_id: object::ID,
-        item_type: String, // "weapon" or "armor"
+        item_type: String,
         rarity: u8,
         timestamp: u64,
     }
