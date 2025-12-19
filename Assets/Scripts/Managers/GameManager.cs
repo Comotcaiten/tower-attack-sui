@@ -20,6 +20,8 @@ public class GameManager : MonoBehaviour
 
     public List<MonsterData> datas;
 
+    public GameObject GameWinScreen;
+
     void Awake()
     {
         Instance = this;
@@ -29,6 +31,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         StartGame();
+        GameWinScreen!.SetActive(false);
     }
 
     void Update()
@@ -56,6 +59,8 @@ public class GameManager : MonoBehaviour
     public void Win()
     {
         State = GameState.Win;
+
+        GameWinScreen!.SetActive(true);
 
     }
 
