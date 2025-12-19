@@ -3,7 +3,7 @@ using UnityEngine;
 public class EnergyManager : MonoBehaviour
 {
     public int maxEnergy = 10;
-    public float regenRate = 1f;
+    public float regenRate = 2f;
 
     public int CurrentEnergy { get; private set; }
 
