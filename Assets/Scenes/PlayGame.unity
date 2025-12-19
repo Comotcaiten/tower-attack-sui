@@ -1404,7 +1404,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxEnergy: 10
-  regenRate: 1
+  regenRate: 2
 --- !u!4 &1665141347
 Transform:
   m_ObjectHideFlags: 0
@@ -1697,6 +1697,10 @@ PrefabInstance:
     - target: {fileID: 975600573257124882, guid: dca5fa11f18cd3e488f60f6611adebaf, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3272133248566865032, guid: dca5fa11f18cd3e488f60f6611adebaf, type: 3}
+      propertyPath: maxHp
+      value: 1000
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
