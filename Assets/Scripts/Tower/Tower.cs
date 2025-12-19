@@ -74,6 +74,7 @@ public class Tower : MonoBehaviour
 
     protected void Die()
     {
+        GameManager.Instance.Win();
         Destroy(gameObject);
     }
 }

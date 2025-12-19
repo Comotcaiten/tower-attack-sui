@@ -5,7 +5,8 @@ public enum GameState
     Preparing,
     Playing,
     Win,
-    Lose
+    Lose,
+    End
 }
 
 public class GameManager : MonoBehaviour
@@ -24,17 +25,25 @@ public class GameManager : MonoBehaviour
         State = GameState.Preparing;
     }
 
+    void Start()
+    {
+        StartGame();
+    }
+
     void Update()
-    {    
-        if (Input.GetMouseButtonDown(0))
+    {
+        if (State == GameState.Playing)
         {
-            if (datas.Count <= 0)
+            if (Input.GetMouseButtonDown(0))
             {
-                Debug.Log("GameManager > Datas > [Null-0x00000000]: Dont have any data to spawn");
-                return;
+                if (datas.Count <= 0)
+                {
+                    Debug.Log("GameManager > Datas > [Null-0x00000000]: Dont have any data to spawn");
+                    return;
+                }
+                Debug.Log("Mouse Button Down");
+                HandleClick();
             }
-            Debug.Log("Mouse Button Down");
-            HandleClick();
         }
     }
 
