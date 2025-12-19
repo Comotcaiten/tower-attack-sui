@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DefenderA
   m_EditorClassIdentifier: 
   defenderName: DefenderA
-  sprite: {fileID: 7482667652216324306, guid: 48e93eef0688c4a259cb0eddcd8661f7, type: 3}
+  sprite: {fileID: 21300000, guid: 49763f91ff9a68644897226748ef2f76, type: 3}
   level: 2
   maxHP: 10000
   attack: 10

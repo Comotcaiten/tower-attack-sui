@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: UnitA
   m_EditorClassIdentifier: 
   monsterName: UnitA
-  sprite: {fileID: 21300000, guid: e625d03de41c05c468d5626c1f96cdd4, type: 3}
+  sprite: {fileID: 21300000, guid: f9a60b90a6c0d6a4f86694a503171704, type: 3}
   level: 10
   energyCost: 1
   maxHP: 100
