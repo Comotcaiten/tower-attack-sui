@@ -23,6 +23,10 @@ public class GameManager : MonoBehaviour
     public GameObject GameWinScreen;
     public GameObject EnergyBarUI;
 
+    [Header("Blockchain Integration")]
+    public bool useBlockchain = false;
+    private bool blockchainSessionReady = false;
+
     void Awake()
     {
         Instance = this;
@@ -31,8 +35,19 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        StartGame();
+        // If blockchain is enabled, wait for session
+        if (!useBlockchain)
+        {
+            StartGame();
+        }
         GameWinScreen!.SetActive(false);
+    }
+
+    // Called by BlockchainGameIntegration when session is ready
+    public void OnBlockchainSessionReady()
+    {
+        blockchainSessionReady = true;
+        StartGame();
     }
 
     void Update()
@@ -84,8 +99,17 @@ public class GameManager : MonoBehaviour
             return;
         
         Debug.Log("Point: " + hit.transform.position);
-        // SpawnAtPointer(hit.collider.transform.position);
+        
+        // Spawn monster in Unity
         spawnManager.SpawnMonster(datas[0], hit.transform.position);
+
+        // If blockchain enabled, spawn on-chain too
+        if (useBlockchain && blockchainSessionReady && SuiWalletConnector.Instance != null)
+        {
+            // Determine monster level (you can make this dynamic based on datas[0])
+            int monsterLevel = 1; // Default level 1
+            SuiWalletConnector.Instance.SpawnMonsterLevel(monsterLevel);
+        }
     }
 
     IEnumerator EndAfter() {
