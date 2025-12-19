@@ -26,6 +26,7 @@ public class EnergyManager : MonoBehaviour
     public void Spend(int cost)
     {
         CurrentEnergy -= cost;
-        CurrentEnergy = Mathf.Min(0, CurrentEnergy);
+        // Đảm bảo năng lượng không âm, lấy giá trị lớn nhất giữa 0 và CurrentEnergy
+        CurrentEnergy = Mathf.Max(0, CurrentEnergy);
     }
 }
