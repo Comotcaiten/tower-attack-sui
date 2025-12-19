@@ -3,7 +3,12 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Monster
+  - Defender
+  - Pointer
+  - Bullet
+  - Tower
   layers:
   - Default
   - TransparentFX
@@ -12,10 +17,10 @@ TagManager:
   - Water
   - UI
   - 
-  - 
-  - 
-  - 
-  - 
+  - Monster
+  - Defender
+  - Bullet
+  - Tower
   - 
   - 
   - 
