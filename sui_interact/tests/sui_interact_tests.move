@@ -200,9 +200,9 @@ module sui_interact::game_tests {
         ts::end(scenario);
     }
 
-    // Test: Drop weapon and equip to monster
+    // Test: Buy weapon and equip to monster
     #[test]
-    fun test_drop_and_equip_weapon() {
+    fun test_buy_and_equip_weapon() {
         let mut scenario = ts::begin(ADMIN);
         
         // Initialize
@@ -234,30 +234,24 @@ module sui_interact::game_tests {
             ts::return_shared(registry);
         };
         
-        // Admin drops weapon
-        ts::next_tx(&mut scenario, ADMIN);
+        // Player buys weapon (Rare = 0.15 SUI)
+        ts::next_tx(&mut scenario, PLAYER1);
         {
-            let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
-            let mut game = ts::take_shared<GameSession>(&scenario);
             let mut registry = ts::take_shared<GameRegistry>(&scenario);
             let mut clock = create_clock(&mut scenario);
+            let payment = coin::mint_for_testing<SUI>(150_000_000, ts::ctx(&mut scenario));
             
-            game::drop_weapon(
-                &admin_cap,
-                &mut game,
+            game::buy_weapon(
                 &mut registry,
+                payment,
                 b"Iron Sword",
-                15,
                 2, // Rare
-                PLAYER1,
                 &clock,
                 ts::ctx(&mut scenario)
             );
             
             test_utils::destroy(clock);
-            ts::return_shared(game);
             ts::return_shared(registry);
-            ts::return_to_sender(&scenario, admin_cap);
         };
         
         // Player equips weapon
@@ -275,9 +269,9 @@ module sui_interact::game_tests {
         ts::end(scenario);
     }
 
-    // Test: Drop armor and equip to monster
+    // Test: Buy armor and equip to monster
     #[test]
-    fun test_drop_and_equip_armor() {
+    fun test_buy_and_equip_armor() {
         let mut scenario = ts::begin(ADMIN);
         
         // Initialize
@@ -309,30 +303,24 @@ module sui_interact::game_tests {
             ts::return_shared(registry);
         };
         
-        // Admin drops armor
-        ts::next_tx(&mut scenario, ADMIN);
+        // Player buys armor (Legendary = 0.3 SUI)
+        ts::next_tx(&mut scenario, PLAYER1);
         {
-            let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
-            let mut game = ts::take_shared<GameSession>(&scenario);
             let mut registry = ts::take_shared<GameRegistry>(&scenario);
             let mut clock = create_clock(&mut scenario);
+            let payment = coin::mint_for_testing<SUI>(300_000_000, ts::ctx(&mut scenario));
             
-            game::drop_armor(
-                &admin_cap,
-                &mut game,
+            game::buy_armor(
                 &mut registry,
+                payment,
                 b"Steel Armor",
-                20,
-                3, // Epic
-                PLAYER1,
+                3, // Legendary
                 &clock,
                 ts::ctx(&mut scenario)
             );
             
             test_utils::destroy(clock);
-            ts::return_shared(game);
             ts::return_shared(registry);
-            ts::return_to_sender(&scenario, admin_cap);
         };
         
         // Player equips armor

@@ -19,6 +19,16 @@ module sui_interact::game {
     const SPAWN_COST_LV2: u64 = 200_000_000; // 0.2 SUI
     const SPAWN_COST_LV3: u64 = 400_000_000; // 0.4 SUI
     const DEFENDER_POWER_INCREASE_INTERVAL: u64 = 60000; // 60 seconds in milliseconds
+    
+    // Weapon costs by rarity
+    const WEAPON_COST_COMMON: u64 = 50_000_000;     // 0.05 SUI (rarity 1)
+    const WEAPON_COST_RARE: u64 = 150_000_000;      // 0.15 SUI (rarity 2)
+    const WEAPON_COST_LEGENDARY: u64 = 300_000_000; // 0.3 SUI (rarity 3)
+    
+    // Armor costs by rarity
+    const ARMOR_COST_COMMON: u64 = 50_000_000;      // 0.05 SUI (rarity 1)
+    const ARMOR_COST_RARE: u64 = 150_000_000;       // 0.15 SUI (rarity 2)
+    const ARMOR_COST_LEGENDARY: u64 = 300_000_000;  // 0.3 SUI (rarity 3)
 
     // ============ Structs ============
     
@@ -102,13 +112,6 @@ module sui_interact::game {
         timestamp: u64,
     }
 
-    public struct ItemDropped has copy, drop {
-        item_id: object::ID,
-        item_type: String,
-        rarity: u8,
-        timestamp: u64,
-    }
-
     public struct MonsterEquipped has copy, drop {
         monster_id: object::ID,
         item_id: object::ID,
@@ -131,6 +134,22 @@ module sui_interact::game {
     public struct FortressDestroyed has copy, drop {
         fortress_id: object::ID,
         game_id: object::ID,
+        timestamp: u64,
+    }
+
+    public struct WeaponPurchased has copy, drop {
+        weapon_id: object::ID,
+        buyer: address,
+        rarity: u8,
+        cost: u64,
+        timestamp: u64,
+    }
+
+    public struct ArmorPurchased has copy, drop {
+        armor_id: object::ID,
+        buyer: address,
+        rarity: u8,
+        cost: u64,
         timestamp: u64,
     }
 
@@ -281,75 +300,109 @@ module sui_interact::game {
 
     // ============ Item Functions ============
     
-    /// Drop a weapon (random drop during battle - called by admin/game logic)
-    entry fun drop_weapon(
-        _admin: &AdminCap,
-        game: &mut GameSession,
+    /// Buy a weapon with SUI
+    entry fun buy_weapon(
         registry: &mut GameRegistry,
+        payment: Coin<SUI>,
         name: vector<u8>,
-        attack_bonus: u64,
         rarity: u8,
-        recipient: address,
         clock: &Clock,
         ctx: &mut tx_context::TxContext
     ) {
+        assert!(rarity >= 1 && rarity <= 3, E_INVALID_LEVEL);
+
+        // Determine cost and attack bonus based on rarity
+        let (cost, attack_bonus) = if (rarity == 1) {
+            (WEAPON_COST_COMMON, 10)
+        } else if (rarity == 2) {
+            (WEAPON_COST_RARE, 25)
+        } else {
+            (WEAPON_COST_LEGENDARY, 50)
+        };
+
+        assert!(coin::value(&payment) >= cost, E_INSUFFICIENT_FUNDS);
+
+        let buyer = tx_context::sender(ctx);
         let weapon_id = object::new(ctx);
         let weapon = Weapon {
             id: weapon_id,
             name: string::utf8(name),
             attack_bonus,
             rarity,
-            owner: recipient,
+            owner: buyer,
         };
 
         let weapon_inner_id = object::uid_to_inner(&weapon.id);
-        vector::push_back(&mut game.items_dropped, weapon_inner_id);
         registry.total_items_dropped = registry.total_items_dropped + 1;
 
-        event::emit(ItemDropped {
-            item_id: weapon_inner_id,
-            item_type: string::utf8(b"weapon"),
+        event::emit(WeaponPurchased {
+            weapon_id: weapon_inner_id,
+            buyer,
             rarity,
+            cost,
             timestamp: clock::timestamp_ms(clock),
         });
 
-        transfer::public_transfer(weapon, recipient);
+        // Burn payment
+        transfer::public_transfer(payment, @0x0);
+        
+        // Transfer weapon to buyer
+        transfer::public_transfer(weapon, buyer);
     }
 
-    /// Drop an armor (random drop during battle - called by admin/game logic)
-    entry fun drop_armor(
-        _admin: &AdminCap,
-        game: &mut GameSession,
+
+
+    /// Buy an armor with SUI
+    entry fun buy_armor(
         registry: &mut GameRegistry,
+        payment: Coin<SUI>,
         name: vector<u8>,
-        defense_bonus: u64,
         rarity: u8,
-        recipient: address,
         clock: &Clock,
         ctx: &mut tx_context::TxContext
     ) {
+        assert!(rarity >= 1 && rarity <= 3, E_INVALID_LEVEL);
+
+        // Determine cost and defense bonus based on rarity
+        let (cost, defense_bonus) = if (rarity == 1) {
+            (ARMOR_COST_COMMON, 10)
+        } else if (rarity == 2) {
+            (ARMOR_COST_RARE, 25)
+        } else {
+            (ARMOR_COST_LEGENDARY, 50)
+        };
+
+        assert!(coin::value(&payment) >= cost, E_INSUFFICIENT_FUNDS);
+
+        let buyer = tx_context::sender(ctx);
         let armor_id = object::new(ctx);
         let armor = Armor {
             id: armor_id,
             name: string::utf8(name),
             defense_bonus,
             rarity,
-            owner: recipient,
+            owner: buyer,
         };
 
         let armor_inner_id = object::uid_to_inner(&armor.id);
-        vector::push_back(&mut game.items_dropped, armor_inner_id);
         registry.total_items_dropped = registry.total_items_dropped + 1;
 
-        event::emit(ItemDropped {
-            item_id: armor_inner_id,
-            item_type: string::utf8(b"armor"),
+        event::emit(ArmorPurchased {
+            armor_id: armor_inner_id,
+            buyer,
             rarity,
+            cost,
             timestamp: clock::timestamp_ms(clock),
         });
 
-        transfer::public_transfer(armor, recipient);
+        // Burn payment
+        transfer::public_transfer(payment, @0x0);
+        
+        // Transfer armor to buyer
+        transfer::public_transfer(armor, buyer);
     }
+
+
 
     /// Equip weapon to monster
     entry fun equip_weapon(
