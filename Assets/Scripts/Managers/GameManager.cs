@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 public enum GameState
@@ -55,6 +56,7 @@ public class GameManager : MonoBehaviour
     public void Win()
     {
         State = GameState.Win;
+
     }
 
     public void Lose()
@@ -78,4 +80,10 @@ public class GameManager : MonoBehaviour
         // SpawnAtPointer(hit.collider.transform.position);
         spawnManager.SpawnMonster(datas[0], hit.transform.position);
     }
+
+    IEnumerator EndAfter() {
+        yield return new WaitForSeconds(1f);
+
+        State = GameState.End;
+    } 
 }

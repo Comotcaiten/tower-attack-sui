@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum MonsterState { Idle, Move, Attack, Die }
+public enum MonsterState { Idle, Move, Attack, Die, End }
 public class Monster : BaseUnit
 {
     public MonsterData data;
@@ -25,6 +25,18 @@ public class Monster : BaseUnit
 
     void Update()
     {
+        if (state == MonsterState.End)
+        {
+            return;
+        }
+        else if (GameManager.Instance!.State == GameState.Win || GameManager.Instance!.State == GameState.Lose)
+        {
+            FreezeMove();
+            gameObject.SetActive(false);
+            state = MonsterState.End;
+            return;
+        }
+
         sensor.Cast();
 
         if (state != MonsterState.Attack &&
