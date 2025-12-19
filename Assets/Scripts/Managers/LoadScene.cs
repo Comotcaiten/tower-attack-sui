@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-// Lớp để giải mã JSON từ Bridge
 [System.Serializable]
 public class WalletData
 {
@@ -20,71 +19,55 @@ public class LoadScene : MonoBehaviour
     private static extern void ConnectWalletJS(string preferredWallet);
 
     [DllImport("__Internal")]
-    private static extern void DisconnectWalletJS(); // Khai báo thêm hàm disconnect
-
-    [DllImport("__Internal")]
     private static extern void SetBridgeConfig(string chain, string unityObjectName);
-
-    [DllImport("__Internal")]
-    private static extern void TryReconnectJS(string preferredWallet); // Hàm tự động kết nối lại
 
     void Start()
     {
+        // Đặt cấu hình tên đối tượng nhận tin nhắn là chính nó (LoadScene)
         #if UNITY_WEBGL && !UNITY_EDITOR
-            SetBridgeConfig("sui:mainnet", "LoadScene");
-            // Tự động kiểm tra xem ví đã connect trước đó chưa
-            TryReconnectJS("slush"); 
+            SetBridgeConfig("sui:mainnet", gameObject.name); 
         #endif
     }
 
+    // --- 1. NÚT CONNECT WALLET ---
     public void ConnectWallet()
     {
         #if UNITY_WEBGL && !UNITY_EDITOR
             ConnectWalletJS("slush");
         #else
-            Debug.Log("Sui Wallet chỉ hoạt động trên bản Build WebGL");
+            Debug.Log("Mở ví Slush (Chỉ hoạt động trên WebGL)");
         #endif
     }
 
-    // Hàm gắn vào Button Disconnect
-    public void DisconnectWallet()
+    // --- 2. NÚT START ---
+    public void StartGame()
     {
-        #if UNITY_WEBGL && !UNITY_EDITOR
-            DisconnectWalletJS();
+        // Chuyển sang Scene chơi game của bạn
+        SceneManager.LoadScene("PlayGame");
+    }
+
+    // --- 3. NÚT QUIT ---
+    public void QuitGame()
+    {
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        #else
+            Application.Quit();
         #endif
     }
 
-    // --- CÁC HÀM NHẬN DỮ LIỆU ---
-
+    // Hàm nhận dữ liệu khi ví kết nối thành công
     public void OnWalletConnected(string jsonResponse)
     {
-        // Giải mã JSON để lấy địa chỉ ví
         WalletData data = JsonUtility.FromJson<WalletData>(jsonResponse);
-        string fullAddress = data.address;
-
-        Debug.Log("Đã kết nối ví: " + fullAddress);
-
         if (statusText != null) 
         {
-            // Hiển thị rút gọn: 0x1234...abcd
-            statusText.text = fullAddress.Substring(0, 6) + "..." + fullAddress.Substring(fullAddress.Length - 4);
+            statusText.text = "Connected: " + data.address.Substring(0, 6) + "..." + data.address.Substring(data.address.Length - 4);
         }
-        
-        // Nếu muốn tự động vào game:
-        // Invoke("StartGame", 1.5f);
-    }
-
-    public void OnWalletDisconnected(string json)
-    {
-        Debug.Log("Ví đã ngắt kết nối");
-        if (statusText != null) statusText.text = "Disconnected";
     }
 
     public void OnWalletError(string errorMessage)
     {
-        Debug.LogError("Lỗi ví: " + errorMessage);
         if (statusText != null) statusText.text = "Error: " + errorMessage;
     }
-
-    public void StartGame() { SceneManager.LoadScene("PlayGame"); }
 }
