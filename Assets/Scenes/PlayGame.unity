@@ -122,6 +122,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &116629849 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 10340852031577748, guid: 62c3255c9f8b90a48a9de975741fc7be, type: 3}
+  m_PrefabInstance: {fileID: 1116774032505181203}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &120967092
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1331,6 +1336,7 @@ MonoBehaviour:
   datas:
   - {fileID: 11400000, guid: 9007deb7224b03b41a179c83a7ffd386, type: 2}
   GameWinScreen: {fileID: 676336500}
+  EnergyBarUI: {fileID: 116629849}
 --- !u!1001 &1296983661
 PrefabInstance:
   m_ObjectHideFlags: 0

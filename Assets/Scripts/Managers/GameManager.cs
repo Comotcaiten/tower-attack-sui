@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour
     public List<MonsterData> datas;
 
     public GameObject GameWinScreen;
+    public GameObject EnergyBarUI;
 
     void Awake()
     {
@@ -61,6 +62,7 @@ public class GameManager : MonoBehaviour
         State = GameState.Win;
 
         GameWinScreen!.SetActive(true);
+        EnergyBarUI!.SetActive(false);
 
     }
 
