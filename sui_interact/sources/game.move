@@ -20,15 +20,10 @@ module sui_interact::game {
     const SPAWN_COST_LV3: u64 = 400_000_000; // 0.4 SUI
     const DEFENDER_POWER_INCREASE_INTERVAL: u64 = 60000; // 60 seconds in milliseconds
     
-    // Weapon costs by rarity
-    const WEAPON_COST_COMMON: u64 = 50_000_000;     // 0.05 SUI (rarity 1)
-    const WEAPON_COST_RARE: u64 = 150_000_000;      // 0.15 SUI (rarity 2)
-    const WEAPON_COST_LEGENDARY: u64 = 300_000_000; // 0.3 SUI (rarity 3)
-    
-    // Armor costs by rarity
-    const ARMOR_COST_COMMON: u64 = 50_000_000;      // 0.05 SUI (rarity 1)
-    const ARMOR_COST_RARE: u64 = 150_000_000;       // 0.15 SUI (rarity 2)
-    const ARMOR_COST_LEGENDARY: u64 = 300_000_000;  // 0.3 SUI (rarity 3)
+    // Upgrade costs
+    const UPGRADE_HP_COST: u64 = 100_000_000;      // 0.1 SUI per HP upgrade
+    const UPGRADE_ATTACK_COST: u64 = 150_000_000;  // 0.15 SUI per Attack upgrade
+    const UPGRADE_DEFENSE_COST: u64 = 120_000_000; // 0.12 SUI per Defense upgrade
 
     // ============ Structs ============
     
@@ -37,40 +32,24 @@ module sui_interact::game {
         id: object::UID,
     }
 
-    /// Monster NFT - The attacking units
+    /// Monster NFT - The attacking units (comes with built-in armor)
     public struct Monster has key, store {
         id: object::UID,
         name: String,
         level: u64,
         base_hp: u64,
         current_hp: u64,
+        max_hp: u64,
         base_attack: u64,
         base_defense: u64,
         owner: address,
-        equipped_weapon: Option<object::ID>, // Weapon NFT ID if equipped
-        equipped_armor: Option<object::ID>,  // Armor NFT ID if equipped
+        hp_upgrade_level: u64,
+        attack_upgrade_level: u64,
+        defense_upgrade_level: u64,
         created_at: u64,
     }
 
-    /// Weapon NFT - Increases attack power
-    public struct Weapon has key, store {
-        id: object::UID,
-        name: String,
-        attack_bonus: u64,
-        rarity: u8, 
-        owner: address,
-    }
-
-    /// Armor NFT - Increases defense
-    public struct Armor has key, store {
-        id: object::UID,
-        name: String,
-        defense_bonus: u64,
-        rarity: u8,
-        owner: address,
-    }
-
-    /// Fortress (Cứ điểm) - The target to attack
+    /// Fortress - The target to attack
     public struct Fortress has key, store {
         id: object::UID,
         level: u64,
@@ -112,12 +91,13 @@ module sui_interact::game {
         timestamp: u64,
     }
 
-    public struct MonsterEquipped has copy, drop {
+    public struct MonsterUpgraded has copy, drop {
         monster_id: object::ID,
-        item_id: object::ID,
-        item_type: String,
+        upgrade_type: String,
+        new_level: u64,
+        cost: u64,
+        timestamp: u64,
     }
-    
 
     public struct GameStarted has copy, drop {
         game_id: object::ID,
@@ -135,22 +115,6 @@ module sui_interact::game {
     public struct FortressDestroyed has copy, drop {
         fortress_id: object::ID,
         game_id: object::ID,
-        timestamp: u64,
-    }
-
-    public struct WeaponPurchased has copy, drop {
-        weapon_id: object::ID,
-        buyer: address,
-        rarity: u8,
-        cost: u64,
-        timestamp: u64,
-    }
-
-    public struct ArmorPurchased has copy, drop {
-        armor_id: object::ID,
-        buyer: address,
-        rarity: u8,
-        cost: u64,
         timestamp: u64,
     }
 
@@ -228,7 +192,6 @@ module sui_interact::game {
 
     // ============ Monster Functions ============
     
-    /// Spawn a monster (Level 1-3)
     entry fun spawn_monster(
         game: &mut GameSession,
         registry: &mut GameRegistry,
@@ -262,11 +225,13 @@ module sui_interact::game {
             level,
             base_hp,
             current_hp: base_hp,
+            max_hp: base_hp,
             base_attack,
             base_defense,
             owner: tx_context::sender(ctx),
-            equipped_weapon: std::option::none(),
-            equipped_armor: std::option::none(),
+            hp_upgrade_level: 0,
+            attack_upgrade_level: 0,
+            defense_upgrade_level: 0,
             created_at: clock::timestamp_ms(clock),
         };
 
@@ -299,148 +264,87 @@ module sui_interact::game {
         }
     }
 
-    // ============ Item Functions ============
+    // ============ Monster Upgrade Functions ============
     
-    /// Buy a weapon with SUI
-    entry fun buy_weapon(
-        registry: &mut GameRegistry,
+    /// Upgrade monster HP with SUI
+    entry fun upgrade_monster_hp(
+        monster: &mut Monster,
         payment: Coin<SUI>,
-        name: vector<u8>,
-        rarity: u8,
         clock: &Clock,
         ctx: &mut tx_context::TxContext
     ) {
-        assert!(rarity >= 1 && rarity <= 3, E_INVALID_LEVEL);
+        assert!(monster.owner == tx_context::sender(ctx), E_NOT_AUTHORIZED);
+        assert!(coin::value(&payment) >= UPGRADE_HP_COST, E_INSUFFICIENT_FUNDS);
 
-        // Determine cost and attack bonus based on rarity
-        let (cost, attack_bonus) = if (rarity == 1) {
-            (WEAPON_COST_COMMON, 10)
-        } else if (rarity == 2) {
-            (WEAPON_COST_RARE, 25)
-        } else {
-            (WEAPON_COST_LEGENDARY, 50)
-        };
+        // Increase HP by 50 per upgrade
+        let hp_increase = 50;
+        monster.base_hp = monster.base_hp + hp_increase;
+        monster.max_hp = monster.max_hp + hp_increase;
+        monster.current_hp = monster.current_hp + hp_increase;
+        monster.hp_upgrade_level = monster.hp_upgrade_level + 1;
 
-        assert!(coin::value(&payment) >= cost, E_INSUFFICIENT_FUNDS);
-
-        let buyer = tx_context::sender(ctx);
-        let weapon_id = object::new(ctx);
-        let weapon = Weapon {
-            id: weapon_id,
-            name: string::utf8(name),
-            attack_bonus,
-            rarity,
-            owner: buyer,
-        };
-
-        let weapon_inner_id = object::uid_to_inner(&weapon.id);
-        registry.total_items_dropped = registry.total_items_dropped + 1;
-
-        event::emit(WeaponPurchased {
-            weapon_id: weapon_inner_id,
-            buyer,
-            rarity,
-            cost,
+        event::emit(MonsterUpgraded {
+            monster_id: object::id(monster),
+            upgrade_type: string::utf8(b"HP"),
+            new_level: monster.hp_upgrade_level,
+            cost: UPGRADE_HP_COST,
             timestamp: clock::timestamp_ms(clock),
         });
 
         // Burn payment
         transfer::public_transfer(payment, @0x0);
-        
-        // Transfer weapon to buyer
-        transfer::public_transfer(weapon, buyer);
     }
 
-
-
-    /// Buy an armor with SUI
-    entry fun buy_armor(
-        registry: &mut GameRegistry,
+    /// Upgrade monster Attack with SUI
+    entry fun upgrade_monster_attack(
+        monster: &mut Monster,
         payment: Coin<SUI>,
-        name: vector<u8>,
-        rarity: u8,
         clock: &Clock,
         ctx: &mut tx_context::TxContext
     ) {
-        assert!(rarity >= 1 && rarity <= 3, E_INVALID_LEVEL);
+        assert!(monster.owner == tx_context::sender(ctx), E_NOT_AUTHORIZED);
+        assert!(coin::value(&payment) >= UPGRADE_ATTACK_COST, E_INSUFFICIENT_FUNDS);
 
-        // Determine cost and defense bonus based on rarity
-        let (cost, defense_bonus) = if (rarity == 1) {
-            (ARMOR_COST_COMMON, 10)
-        } else if (rarity == 2) {
-            (ARMOR_COST_RARE, 25)
-        } else {
-            (ARMOR_COST_LEGENDARY, 50)
-        };
+        // Increase Attack by 15 per upgrade
+        monster.base_attack = monster.base_attack + 15;
+        monster.attack_upgrade_level = monster.attack_upgrade_level + 1;
 
-        assert!(coin::value(&payment) >= cost, E_INSUFFICIENT_FUNDS);
-
-        let buyer = tx_context::sender(ctx);
-        let armor_id = object::new(ctx);
-        let armor = Armor {
-            id: armor_id,
-            name: string::utf8(name),
-            defense_bonus,
-            rarity,
-            owner: buyer,
-        };
-
-        let armor_inner_id = object::uid_to_inner(&armor.id);
-        registry.total_items_dropped = registry.total_items_dropped + 1;
-
-        event::emit(ArmorPurchased {
-            armor_id: armor_inner_id,
-            buyer,
-            rarity,
-            cost,
+        event::emit(MonsterUpgraded {
+            monster_id: object::id(monster),
+            upgrade_type: string::utf8(b"Attack"),
+            new_level: monster.attack_upgrade_level,
+            cost: UPGRADE_ATTACK_COST,
             timestamp: clock::timestamp_ms(clock),
         });
 
         // Burn payment
         transfer::public_transfer(payment, @0x0);
-        
-        // Transfer armor to buyer
-        transfer::public_transfer(armor, buyer);
     }
 
-
-
-    /// Equip weapon to monster
-    entry fun equip_weapon(
+    /// Upgrade monster Defense with SUI
+    entry fun upgrade_monster_defense(
         monster: &mut Monster,
-        weapon: &Weapon,
-        ctx: &tx_context::TxContext
+        payment: Coin<SUI>,
+        clock: &Clock,
+        ctx: &mut tx_context::TxContext
     ) {
         assert!(monster.owner == tx_context::sender(ctx), E_NOT_AUTHORIZED);
-        assert!(weapon.owner == tx_context::sender(ctx), E_NOT_AUTHORIZED);
-        
-        let weapon_id = object::id(weapon);
-        monster.equipped_weapon = std::option::some(weapon_id);
+        assert!(coin::value(&payment) >= UPGRADE_DEFENSE_COST, E_INSUFFICIENT_FUNDS);
 
-        event::emit(MonsterEquipped {
+        // Increase Defense by 10 per upgrade
+        monster.base_defense = monster.base_defense + 10;
+        monster.defense_upgrade_level = monster.defense_upgrade_level + 1;
+
+        event::emit(MonsterUpgraded {
             monster_id: object::id(monster),
-            item_id: weapon_id,
-            item_type: string::utf8(b"weapon"),
+            upgrade_type: string::utf8(b"Defense"),
+            new_level: monster.defense_upgrade_level,
+            cost: UPGRADE_DEFENSE_COST,
+            timestamp: clock::timestamp_ms(clock),
         });
-    }
 
-    /// Equip armor to monster
-    entry fun equip_armor(
-        monster: &mut Monster,
-        armor: &Armor,
-        ctx: &tx_context::TxContext
-    ) {
-        assert!(monster.owner == tx_context::sender(ctx), E_NOT_AUTHORIZED);
-        assert!(armor.owner == tx_context::sender(ctx), E_NOT_AUTHORIZED);
-        
-        let armor_id = object::id(armor);
-        monster.equipped_armor = std::option::some(armor_id);
-
-        event::emit(MonsterEquipped {
-            monster_id: object::id(monster),
-            item_id: armor_id,
-            item_type: string::utf8(b"armor"),
-        });
+        // Burn payment
+        transfer::public_transfer(payment, @0x0);
     }
 
     // ============ Battle Functions ============
@@ -478,7 +382,7 @@ module sui_interact::game {
         assert!(monster.current_hp > 0, E_MONSTER_DEAD);
         assert!(std::option::is_none(&game.end_time), E_GAME_ALREADY_ENDED);
 
-        // Calculate total attack (base only, weapon bonus handled via equipped_weapon ID)
+        // Use upgraded attack value
         let total_attack = monster.base_attack;
 
         // Monster attacks fortress

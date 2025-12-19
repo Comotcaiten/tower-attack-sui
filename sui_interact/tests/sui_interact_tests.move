@@ -1,6 +1,6 @@
 #[test_only]
 module sui_interact::game_tests {
-    use sui_interact::game::{Self, AdminCap, Monster, Weapon, Armor, Fortress, GameSession, GameRegistry};
+    use sui_interact::game::{Self, AdminCap, Monster, Fortress, GameSession, GameRegistry};
     use sui::test_scenario::{Self as ts, Scenario};
     use sui::clock::{Self, Clock};
     use sui::coin::{Self, Coin};
@@ -200,9 +200,9 @@ module sui_interact::game_tests {
         ts::end(scenario);
     }
 
-    // Test: Buy weapon and equip to monster
+    // Test: Upgrade monster HP
     #[test]
-    fun test_buy_and_equip_weapon() {
+    fun test_upgrade_monster_hp() {
         let mut scenario = ts::begin(ADMIN);
         
         // Initialize
@@ -234,44 +234,125 @@ module sui_interact::game_tests {
             ts::return_shared(registry);
         };
         
-        // Player buys weapon (Rare = 0.15 SUI)
-        ts::next_tx(&mut scenario, PLAYER1);
-        {
-            let mut registry = ts::take_shared<GameRegistry>(&scenario);
-            let mut clock = create_clock(&mut scenario);
-            let payment = coin::mint_for_testing<SUI>(150_000_000, ts::ctx(&mut scenario));
-            
-            game::buy_weapon(
-                &mut registry,
-                payment,
-                b"Iron Sword",
-                2, // Rare
-                &clock,
-                ts::ctx(&mut scenario)
-            );
-            
-            test_utils::destroy(clock);
-            ts::return_shared(registry);
-        };
-        
-        // Player equips weapon
+        // Upgrade HP (0.1 SUI)
         ts::next_tx(&mut scenario, PLAYER1);
         {
             let mut monster = ts::take_from_sender<Monster>(&scenario);
-            let weapon = ts::take_from_sender<Weapon>(&scenario);
+            let mut clock = create_clock(&mut scenario);
+            let payment = coin::mint_for_testing<SUI>(100_000_000, ts::ctx(&mut scenario));
             
-            game::equip_weapon(&mut monster, &weapon, ts::ctx(&mut scenario));
+            game::upgrade_monster_hp(&mut monster, payment, &clock, ts::ctx(&mut scenario));
             
+            test_utils::destroy(clock);
             ts::return_to_sender(&scenario, monster);
-            ts::return_to_sender(&scenario, weapon);
         };
         
         ts::end(scenario);
     }
 
-    // Test: Buy armor and equip to monster
+    // Test: Upgrade monster Attack
     #[test]
-    fun test_buy_and_equip_armor() {
+    fun test_upgrade_monster_attack() {
+        let mut scenario = ts::begin(ADMIN);
+        
+        // Initialize
+        {
+            game::init_for_testing(ts::ctx(&mut scenario));
+        };
+        
+        ts::next_tx(&mut scenario, PLAYER1);
+        {
+            let mut registry = ts::take_shared<GameRegistry>(&scenario);
+            let mut clock = create_clock(&mut scenario);
+            game::start_game(&mut registry, &clock, ts::ctx(&mut scenario));
+            test_utils::destroy(clock);
+            ts::return_shared(registry);
+        };
+        
+        // Spawn monster
+        ts::next_tx(&mut scenario, PLAYER1);
+        {
+            let mut game = ts::take_shared<GameSession>(&scenario);
+            let mut registry = ts::take_shared<GameRegistry>(&scenario);
+            let mut clock = create_clock(&mut scenario);
+            let payment = coin::mint_for_testing<SUI>(200_000_000, ts::ctx(&mut scenario));
+            
+            game::spawn_monster(&mut game, &mut registry, payment, 2, b"Orc", &clock, ts::ctx(&mut scenario));
+            
+            test_utils::destroy(clock);
+            ts::return_shared(game);
+            ts::return_shared(registry);
+        };
+        
+        // Upgrade Attack (0.15 SUI)
+        ts::next_tx(&mut scenario, PLAYER1);
+        {
+            let mut monster = ts::take_from_sender<Monster>(&scenario);
+            let mut clock = create_clock(&mut scenario);
+            let payment = coin::mint_for_testing<SUI>(150_000_000, ts::ctx(&mut scenario));
+            
+            game::upgrade_monster_attack(&mut monster, payment, &clock, ts::ctx(&mut scenario));
+            
+            test_utils::destroy(clock);
+            ts::return_to_sender(&scenario, monster);
+        };
+        
+        ts::end(scenario);
+    }
+
+    // Test: Upgrade monster Defense
+    #[test]
+    fun test_upgrade_monster_defense() {
+        let mut scenario = ts::begin(ADMIN);
+        
+        // Initialize
+        {
+            game::init_for_testing(ts::ctx(&mut scenario));
+        };
+        
+        ts::next_tx(&mut scenario, PLAYER1);
+        {
+            let mut registry = ts::take_shared<GameRegistry>(&scenario);
+            let mut clock = create_clock(&mut scenario);
+            game::start_game(&mut registry, &clock, ts::ctx(&mut scenario));
+            test_utils::destroy(clock);
+            ts::return_shared(registry);
+        };
+        
+        // Spawn monster
+        ts::next_tx(&mut scenario, PLAYER1);
+        {
+            let mut game = ts::take_shared<GameSession>(&scenario);
+            let mut registry = ts::take_shared<GameRegistry>(&scenario);
+            let mut clock = create_clock(&mut scenario);
+            let payment = coin::mint_for_testing<SUI>(400_000_000, ts::ctx(&mut scenario));
+            
+            game::spawn_monster(&mut game, &mut registry, payment, 3, b"Dragon", &clock, ts::ctx(&mut scenario));
+            
+            test_utils::destroy(clock);
+            ts::return_shared(game);
+            ts::return_shared(registry);
+        };
+        
+        // Upgrade Defense (0.12 SUI)
+        ts::next_tx(&mut scenario, PLAYER1);
+        {
+            let mut monster = ts::take_from_sender<Monster>(&scenario);
+            let mut clock = create_clock(&mut scenario);
+            let payment = coin::mint_for_testing<SUI>(120_000_000, ts::ctx(&mut scenario));
+            
+            game::upgrade_monster_defense(&mut monster, payment, &clock, ts::ctx(&mut scenario));
+            
+            test_utils::destroy(clock);
+            ts::return_to_sender(&scenario, monster);
+        };
+        
+        ts::end(scenario);
+    }
+
+    // Test: Multiple upgrades on same monster
+    #[test]
+    fun test_multiple_upgrades() {
         let mut scenario = ts::begin(ADMIN);
         
         // Initialize
@@ -303,36 +384,46 @@ module sui_interact::game_tests {
             ts::return_shared(registry);
         };
         
-        // Player buys armor (Legendary = 0.3 SUI)
-        ts::next_tx(&mut scenario, PLAYER1);
-        {
-            let mut registry = ts::take_shared<GameRegistry>(&scenario);
-            let mut clock = create_clock(&mut scenario);
-            let payment = coin::mint_for_testing<SUI>(300_000_000, ts::ctx(&mut scenario));
-            
-            game::buy_armor(
-                &mut registry,
-                payment,
-                b"Steel Armor",
-                3, // Legendary
-                &clock,
-                ts::ctx(&mut scenario)
-            );
-            
-            test_utils::destroy(clock);
-            ts::return_shared(registry);
-        };
-        
-        // Player equips armor
+        // Upgrade HP twice
         ts::next_tx(&mut scenario, PLAYER1);
         {
             let mut monster = ts::take_from_sender<Monster>(&scenario);
-            let armor = ts::take_from_sender<Armor>(&scenario);
+            let mut clock = create_clock(&mut scenario);
+            let payment1 = coin::mint_for_testing<SUI>(100_000_000, ts::ctx(&mut scenario));
             
-            game::equip_armor(&mut monster, &armor, ts::ctx(&mut scenario));
+            game::upgrade_monster_hp(&mut monster, payment1, &clock, ts::ctx(&mut scenario));
             
+            let payment2 = coin::mint_for_testing<SUI>(100_000_000, ts::ctx(&mut scenario));
+            game::upgrade_monster_hp(&mut monster, payment2, &clock, ts::ctx(&mut scenario));
+            
+            test_utils::destroy(clock);
             ts::return_to_sender(&scenario, monster);
-            ts::return_to_sender(&scenario, armor);
+        };
+        
+        // Upgrade Attack
+        ts::next_tx(&mut scenario, PLAYER1);
+        {
+            let mut monster = ts::take_from_sender<Monster>(&scenario);
+            let mut clock = create_clock(&mut scenario);
+            let payment = coin::mint_for_testing<SUI>(150_000_000, ts::ctx(&mut scenario));
+            
+            game::upgrade_monster_attack(&mut monster, payment, &clock, ts::ctx(&mut scenario));
+            
+            test_utils::destroy(clock);
+            ts::return_to_sender(&scenario, monster);
+        };
+        
+        // Upgrade Defense
+        ts::next_tx(&mut scenario, PLAYER1);
+        {
+            let mut monster = ts::take_from_sender<Monster>(&scenario);
+            let mut clock = create_clock(&mut scenario);
+            let payment = coin::mint_for_testing<SUI>(120_000_000, ts::ctx(&mut scenario));
+            
+            game::upgrade_monster_defense(&mut monster, payment, &clock, ts::ctx(&mut scenario));
+            
+            test_utils::destroy(clock);
+            ts::return_to_sender(&scenario, monster);
         };
         
         ts::end(scenario);
