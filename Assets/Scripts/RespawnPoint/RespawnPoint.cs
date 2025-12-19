@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum RespawnState {Disable, Active}
+public enum RespawnState {Disable, Active, End}
 public class RespawnPoint : MonoBehaviour
 {
     [SerializeField] public Defender defender;
@@ -13,14 +13,23 @@ public class RespawnPoint : MonoBehaviour
 
     void Start()
     {
-        // Spawn();
-
-        // if (defenderObj.)
-
         Spawn();
     }
     void Update()
     {
+
+        if (state == RespawnState.End)
+        {
+            return;
+        }
+        else if (GameManager.Instance!.State == GameState.Win || GameManager.Instance!.State == GameState.Lose)
+        {
+            gameObject.SetActive(false);
+            defenderObj.SetActive(false);
+            state = RespawnState.End;
+            return;
+        }
+
         if (state == RespawnState.Disable)
         {
             timer += Time.deltaTime;
